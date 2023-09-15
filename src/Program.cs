@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using System.Runtime.InteropServices;
+using System.Text;
 using wincred;
 using static wincred.Native;
 
@@ -14,6 +15,16 @@ listCmd.AddOption(countArg);
 listCmd.AddOption(showSecretArg);
 listCmd.SetHandler(List, filterArg, countArg, showSecretArg);
 rootCmd.AddCommand(listCmd);
+
+var addCmd = new Command("add", "Add a new credential.");
+var nameArg = new Option<string>("--name", "Target name of the credential.") { IsRequired = true };
+var userArg = new Option<string>("--username", "User name associated with the credential.");
+var secretArg = new Option<string>("--secret", "Secret value.") { IsRequired = true };
+addCmd.AddOption(nameArg);
+addCmd.AddOption(userArg);
+addCmd.AddOption(secretArg);
+addCmd.SetHandler(Add, nameArg, userArg, secretArg);
+rootCmd.AddCommand(addCmd);
 
 return await rootCmd.InvokeAsync(args);
 
@@ -72,6 +83,41 @@ void List(string? filter, bool countOnly, bool showSecret)
         if (credList != IntPtr.Zero)
         {
             CredFree(credList);
+        }
+    }
+}
+
+void Add(string name, string? userName, string secret)
+{
+    IntPtr credBlob = IntPtr.Zero;
+    
+    try
+    {
+        var cred = new Win32Credential
+        {
+            Type = CredentialType.Generic,
+            TargetName = name,
+            UserName = userName,
+            Persist = CredentialPersist.LocalMachine
+        };
+
+        byte[] secretBytes = Encoding.Unicode.GetBytes(secret);
+        credBlob = Marshal.AllocHGlobal(secretBytes.Length);
+        Marshal.Copy(secretBytes, 0, credBlob, secretBytes.Length);
+
+        cred.CredentialBlob = credBlob;
+        cred.CredentialBlobSize = secretBytes.Length;
+        
+        ThrowIfError(
+            CredWrite(ref cred, 0)
+        );
+
+    }
+    finally
+    {
+        if (credBlob != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(credBlob);
         }
     }
 }
