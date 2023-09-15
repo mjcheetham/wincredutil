@@ -69,7 +69,7 @@ void List(string? filter, bool countOnly, bool showSecret)
 
         switch (error)
         {
-            case 1168: // Not Found
+            case ErrorNotFound:
                 return;
         }
 
@@ -138,7 +138,15 @@ void Add(string name, string? userName, string secret)
 
 void Delete(string name)
 {
-    ThrowIfError(
+    int error = GetLastError(
         CredDelete(name, CredentialType.Generic, 0)
     );
+
+    switch (error)
+    {
+        case ErrorNotFound: // Not Found
+            return;
+    }
+        
+    ThrowIfError(error);
 }

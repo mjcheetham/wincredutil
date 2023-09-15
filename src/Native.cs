@@ -76,6 +76,8 @@ public static class Native
     {
         ThrowIfError(GetLastError(result));
     }
+
+    public const int ErrorNotFound = 1168;
 }
 
 // Enum values from wincred.h
