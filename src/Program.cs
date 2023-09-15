@@ -43,22 +43,35 @@ void List(string? filter, bool countOnly, bool showSecret)
         ? CredentialEnumerateFlags.AllCredentials
         : CredentialEnumerateFlags.None;
     
-    ThrowIfError(
-        CredEnumerate(filter, flags, out int count, out IntPtr ptr)
-    );
+    IntPtr credList = IntPtr.Zero;
 
-    if (countOnly)
+    try
     {
-        Console.WriteLine(count);
-        return;
+        ThrowIfError(
+            CredEnumerate(filter, flags, out int count, out credList)
+        );
+
+        if (countOnly)
+        {
+            Console.WriteLine(count);
+            return;
+        }
+
+        int ptrSize = Marshal.SizeOf<IntPtr>();
+        for (int i = 0; i < count; i++)
+        {
+            IntPtr credPtr = Marshal.ReadIntPtr(credList, i * ptrSize);
+            Win32Credential credential = Marshal.PtrToStructure<Win32Credential>(credPtr);
+
+            PrintCredential(credential, showSecret);
+        }
+
     }
-
-    int ptrSize = Marshal.SizeOf<IntPtr>();
-    for (int i = 0; i < count; i++)
+    finally
     {
-        IntPtr credPtr = Marshal.ReadIntPtr(ptr, i * ptrSize);
-        Win32Credential credential = Marshal.PtrToStructure<Win32Credential>(credPtr);
-
-        PrintCredential(credential, showSecret);
+        if (credList != IntPtr.Zero)
+        {
+            CredFree(credList);
+        }
     }
 }

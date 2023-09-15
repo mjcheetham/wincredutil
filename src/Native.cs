@@ -118,7 +118,7 @@ public struct Win32Credential
     public int AttributeCount;
     public IntPtr Attributes;
     [MarshalAs(UnmanagedType.LPWStr)] public string TargetAlias;
-    [MarshalAs(UnmanagedType.LPWStr)] public string UserName;
+    [MarshalAs(UnmanagedType.LPWStr)] public string? UserName;
 
     public DateTime LastWrittenDateTime => DateTime.FromFileTime(
         ((long)LastWritten.dwHighDateTime << 32) + LastWritten.dwLowDateTime
