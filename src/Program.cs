@@ -26,6 +26,11 @@ addCmd.AddOption(secretArg);
 addCmd.SetHandler(Add, nameArg, userArg, secretArg);
 rootCmd.AddCommand(addCmd);
 
+var deleteCmd = new Command("delete", "Delete an existing credential.");
+deleteCmd.AddOption(nameArg);
+deleteCmd.SetHandler(Delete, nameArg);
+rootCmd.AddCommand(deleteCmd);
+
 return await rootCmd.InvokeAsync(args);
 
 void PrintCredential(Win32Credential c, bool showSecret)
@@ -120,4 +125,12 @@ void Add(string name, string? userName, string secret)
             Marshal.FreeHGlobal(credBlob);
         }
     }
+}
+
+
+void Delete(string name)
+{
+    ThrowIfError(
+        CredDelete(name, CredentialType.Generic, 0)
+    );
 }
