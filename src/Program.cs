@@ -63,9 +63,17 @@ void List(string? filter, bool countOnly, bool showSecret)
 
     try
     {
-        ThrowIfError(
+        int error = GetLastError(
             CredEnumerate(filter, flags, out int count, out credList)
         );
+
+        switch (error)
+        {
+            case 1168: // Not Found
+                return;
+        }
+
+        ThrowIfError(error);
 
         if (countOnly)
         {
