@@ -7,8 +7,10 @@ var rootCmd = new RootCommand("Utility for interacting with the Windows Credenti
 
 var listCmd = new Command("list", "List credential entries.");
 var filterArg = new Option<string>("--filter", "Wildcard filter to match credentials.");
+var countArg = new Option<bool>("--count", "Print the number of returned entries only.");
 listCmd.AddOption(filterArg);
-listCmd.SetHandler(List, filterArg);
+listCmd.AddOption(countArg);
+listCmd.SetHandler(List, filterArg, countArg);
 rootCmd.AddCommand(listCmd);
 
 return await rootCmd.InvokeAsync(args);
@@ -22,7 +24,7 @@ void PrintCredential(Win32Credential c)
     Console.WriteLine();
 }
 
-void List(string? filter)
+void List(string? filter, bool countOnly)
 {
     var flags = string.IsNullOrWhiteSpace(filter)
         ? CredentialEnumerateFlags.AllCredentials
@@ -31,6 +33,12 @@ void List(string? filter)
     ThrowIfError(
         CredEnumerate(filter, flags, out int count, out IntPtr ptr)
     );
+
+    if (countOnly)
+    {
+        Console.WriteLine(count);
+        return;
+    }
 
     int ptrSize = Marshal.SizeOf<IntPtr>();
     for (int i = 0; i < count; i++)
