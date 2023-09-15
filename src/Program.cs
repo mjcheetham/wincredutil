@@ -6,7 +6,9 @@ using static wincred.Native;
 var rootCmd = new RootCommand("Utility for interacting with the Windows Credential Manager.");
 
 var listCmd = new Command("list", "List credential entries.");
-listCmd.SetHandler(List);
+var filterArg = new Option<string>("--filter", "Wildcard filter to match credentials.");
+listCmd.AddOption(filterArg);
+listCmd.SetHandler(List, filterArg);
 rootCmd.AddCommand(listCmd);
 
 return await rootCmd.InvokeAsync(args);
@@ -20,10 +22,14 @@ void PrintCredential(Win32Credential c)
     Console.WriteLine();
 }
 
-void List()
+void List(string? filter)
 {
+    var flags = string.IsNullOrWhiteSpace(filter)
+        ? CredentialEnumerateFlags.AllCredentials
+        : CredentialEnumerateFlags.None;
+    
     ThrowIfError(
-        CredEnumerate(null, CredentialEnumerateFlags.AllCredentials, out int count, out IntPtr ptr)
+        CredEnumerate(filter, flags, out int count, out IntPtr ptr)
     );
 
     int ptrSize = Marshal.SizeOf<IntPtr>();
